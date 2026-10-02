@@ -1,0 +1,284 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>中国工农红军长征 — 跨学科互动课件</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<!-- ===== 开场画面 ===== -->
+<div id="screen-title" class="screen active">
+  <div class="title-bg"></div>
+  <div class="title-veil"></div>
+  <div class="title-content">
+    <div class="title-era">统编版 · 八年级历史上册 · 第十五课</div>
+    <h1 class="title-main">中国工农红军长征</h1>
+    <h2 class="title-sub">与遵义会议</h2>
+    <p class="title-year">1934 — 1936 · 二万五千里</p>
+    <button class="btn-start" id="btn-start">开启长征之旅 ›</button>
+    <div class="title-hint">历史 × 地理 × 语文 · 七幕剧情 · 三维现场</div>
+  </div>
+  <div class="title-credit">素材来源：本课配套课件 · 地图：中国工农红军长征路线图</div>
+</div>
+
+<!-- ===== 主游戏界面 ===== -->
+<div id="screen-game" class="screen">
+
+  <!-- 顶部 HUD -->
+  <div id="hud">
+    <div id="hud-chapter">
+      <span id="hud-chapter-num">第一幕</span>
+      <span id="hud-chapter-name">战略转移的开始</span>
+    </div>
+    <div id="hud-progress-wrap">
+      <div id="hud-progress-bar"><div id="hud-progress-fill"></div></div>
+      <span id="hud-progress-text">0%</span>
+    </div>
+    <div id="hud-score">
+      <span class="hud-icon">⭐</span>
+      <span id="hud-score-val">0</span>
+    </div>
+    <button id="hud-summary" title="随时打开课堂小结">课堂小结</button>
+  </div>
+
+  <!-- 场景容器 -->
+  <div id="scene-container">
+    <!-- 2D 地图场景 -->
+    <div id="scene-map" class="scene active">
+      <canvas id="map-canvas"></canvas>
+      <div id="map-tooltip"></div>
+      <div id="map-controls">
+        <button class="map-btn" id="map-zoom-in"  title="放大">＋</button>
+        <button class="map-btn" id="map-zoom-out" title="缩小">－</button>
+        <button class="map-btn" id="map-reset"    title="重置视角">⊙</button>
+      </div>
+      <div id="map-legend">
+        <div class="legend-item"><span class="legend-dot dot-start"></span>出发地</div>
+        <div class="legend-item"><span class="legend-dot dot-battle"></span>重要战役</div>
+        <div class="legend-item"><span class="legend-dot dot-meeting"></span>会议地点</div>
+        <div class="legend-item"><span class="legend-dot dot-route"></span>行军路线</div>
+        <div class="legend-item"><span class="legend-dot dot-end"></span>会师地</div>
+      </div>
+      <div id="map-tip">拖拽平移 · 滚轮缩放 · 点击地点查看图文</div>
+    </div>
+
+    <!-- 3D 场景 -->
+    <div id="scene-3d" class="scene">
+      <canvas id="canvas-3d"></canvas>
+      <div id="actor-layer"></div>
+      <div id="scene-3d-ui">
+        <div id="scene-3d-name"></div>
+        <div id="scene-3d-hint">🖱 拖拽旋转 · 滚轮缩放 · 双击复位</div>
+      </div>
+
+      <!-- 现场模式切换 -->
+      <div id="scene-3d-modes" class="hidden">
+        <span class="modes-label">现场模式</span>
+        <button class="mode-btn" data-mode="auto" id="mode-auto">🎬 自动模式</button>
+        <button class="mode-btn" data-mode="free" id="mode-free">🖱 自由探索</button>
+        <button class="mode-btn mode-btn--ghost" id="mode-replay">↺ 重来</button>
+      </div>
+
+      <!-- 进入现场时的模式选择 -->
+      <div id="scene-3d-pick" class="hidden">
+        <div class="pick-card">
+          <div class="pick-sub" id="pick-sub"></div>
+          <h3 class="pick-title" id="pick-title"></h3>
+          <p class="pick-desc" id="pick-desc"></p>
+          <div class="pick-btns">
+            <button class="pick-btn pick-btn--auto" data-mode="auto">
+              <b>🎬 自动模式</b><small>镜头依次对准发言人，台词自动播放，适合投屏讲解</small>
+            </button>
+            <button class="pick-btn pick-btn--free" data-mode="free" id="pick-free">
+              <b>🖱 自由探索</b><small>自己转动视角、点击画面里的人物，听他们各自的主张</small>
+            </button>
+          </div>
+          <div class="pick-foot" id="pick-foot">两种模式随时可以在右上角切换</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 对话背景场景 -->
+    <div id="scene-dialog" class="scene">
+      <div id="dialog-bg"></div>
+      <div id="dialog-veil"></div>
+      <div id="dialog-characters">
+        <div id="char-left"  class="character hidden"></div>
+        <div id="char-right" class="character hidden"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== 对话框 ===== -->
+  <div id="dialog-box" class="hidden">
+    <div id="dialog-speaker-bar">
+      <span id="dialog-speaker-name"></span>
+      <span id="dialog-speaker-role"></span>
+    </div>
+    <div id="dialog-text-area">
+      <p id="dialog-text"></p>
+      <span id="dialog-cursor">▼</span>
+    </div>
+    <div id="dialog-choices" class="hidden"></div>
+  </div>
+
+  <!-- ===== 答题弹窗 ===== -->
+  <div id="quiz-overlay" class="hidden">
+    <div id="quiz-modal">
+      <div id="quiz-header">
+        <span id="quiz-icon">📜</span>
+        <span id="quiz-title">历史知识检验</span>
+        <div id="quiz-timer-wrap"><div id="quiz-timer-bar"></div></div>
+      </div>
+      <p id="quiz-question"></p>
+      <div id="quiz-options"></div>
+      <div id="quiz-feedback" class="hidden">
+        <div id="quiz-feedback-icon"></div>
+        <div id="quiz-feedback-text"></div>
+        <button id="quiz-next-btn">继续 ›</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== 地理知识卡片 ===== -->
+  <div id="geo-card-overlay" class="hidden">
+    <div id="geo-card">
+      <div id="geo-card-header">
+        <span id="geo-card-icon">🌏</span>
+        <span id="geo-card-title"></span>
+        <button id="geo-card-close">×</button>
+      </div>
+      <div id="geo-card-body"></div>
+    </div>
+  </div>
+
+  <!-- ===== 章节解锁特效 ===== -->
+  <div id="chapter-unlock" class="hidden">
+    <div id="chapter-unlock-inner">
+      <div id="chapter-unlock-icon">🏅</div>
+      <div id="chapter-unlock-text"></div>
+    </div>
+  </div>
+
+  <!-- 底部推进按钮 -->
+  <button id="btn-advance" class="hidden">▶ 继续 <span class="key-hint">空格</span></button>
+
+</div>
+
+<!-- ===== 结局画面 ===== -->
+<div id="screen-end" class="screen">
+  <div class="end-bg"></div>
+  <div class="end-veil"></div>
+  <div class="end-content">
+    <div class="end-flag">🚩</div>
+    <h2 class="end-title">长征胜利！</h2>
+    <p class="end-year">1936年10月 · 甘肃会宁 · 三军会师</p>
+    <p class="end-quote">
+      “长征是历史纪录上的第一次，<br>
+      长征是宣言书，长征是宣传队，长征是播种机。”<br>
+      <em>—— 毛泽东</em>
+    </p>
+    <div id="end-score-wrap">
+      <div id="end-score-label">本次得分</div>
+      <div id="end-score-num">0</div>
+    </div>
+    <div class="end-actions">
+      <button class="btn-primary" id="btn-summary">课堂小结 📖</button>
+      <button class="btn-ghost-line" id="btn-restart">重新体验 ↺</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== 课堂小结 ===== -->
+<div id="screen-summary" class="screen">
+  <div class="sum-wrap">
+    <header class="sum-head">
+      <button class="sum-btn" id="sum-back">← 返回</button>
+      <h2 class="sum-head__title">课堂小结</h2>
+      <button class="sum-btn" id="sum-restart">重新体验 ↺</button>
+    </header>
+
+    <div class="sum">
+      <div class="sum__col">
+        <article class="panel">
+          <h3 class="panel__t">一、长征的意义</h3>
+          <ul class="panel__list">
+            <li>粉碎了国民党反动派消灭红军的企图</li>
+            <li>保存了党和红军的基干力量，使中国革命<b>转危为安</b></li>
+            <li>播下了革命种子，铸就了<b>长征精神</b>，打开了中国革命的新局面</li>
+          </ul>
+        </article>
+
+        <article class="panel">
+          <h3 class="panel__t">二、遵义会议的历史地位</h3>
+          <ul class="panel__list">
+            <li>开始确立以毛泽东为主要代表的马克思主义正确路线在党中央的领导地位</li>
+            <li>是党的历史上一个<b>生死攸关的转折点</b></li>
+            <li>是中国共产党从幼年走向<b>成熟</b>的标志</li>
+          </ul>
+          <div class="axis">
+            <span class="axis__dot">中共诞生<em>1921</em></span>
+            <span class="axis__line"><i>14年</i></span>
+            <span class="axis__dot axis__dot--key">遵义会议<em>1935</em></span>
+            <span class="axis__line"><i>14年</i></span>
+            <span class="axis__dot">新中国成立<em>1949</em></span>
+          </div>
+        </article>
+
+        <article class="panel">
+          <h3 class="panel__t">三、文物会说话</h3>
+          <div class="relics">
+            <figure><img src="assets/relic/half-belt.webp" alt="半截皮带"><figcaption>半截皮带 · 中国国家博物馆藏</figcaption></figure>
+            <figure><img src="assets/relic/golden-hook.webp" alt="金色的鱼钩"><figcaption>金色的鱼钩 · 中国人民革命军事博物馆藏</figcaption></figure>
+          </div>
+          <p class="panel__note">单衣爬雪山，绝粮过草地——支撑红军的是<b>革命信仰</b>。</p>
+        </article>
+      </div>
+
+      <div class="sum__col">
+        <article class="panel">
+          <h3 class="panel__t">四、课堂活动 · 给长征事件排序</h3>
+          <p class="panel__hint" id="sortHint">按时间先后，依次点击下面的卡片。</p>
+          <div class="sortbox">
+            <div class="sortbox__pool" id="sortPool"></div>
+            <ol class="sortbox__slots" id="sortSlots"></ol>
+          </div>
+          <div class="sortbox__foot">
+            <button class="sum-btn sum-btn--solid" id="sortCheck">检查答案</button>
+            <button class="sum-btn" id="sortReset">重做</button>
+          </div>
+        </article>
+
+        <article class="panel">
+          <h3 class="panel__t">五、我们这一代人的长征</h3>
+          <p class="panel__quote">“每一代人有每一代人的长征路，每一代人都要走好自己的长征路。”</p>
+          <p class="panel__note">今天，我们这一代人的长征，就是实现“两个百年”奋斗目标、实现中华民族伟大复兴的中国梦。</p>
+          <div class="painting"><img src="assets/painting/song-red-army.webp" alt="十送红军"></div>
+        </article>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== 看大图 ===== -->
+<div id="img-viewer" class="hidden">
+  <img id="img-viewer-img" alt="" draggable="false">
+  <div id="img-viewer-bar">
+    <span id="img-viewer-cap"></span>
+    <button id="img-viewer-zoom">🔍 原图大小</button>
+    <button id="img-viewer-close" title="关闭（Esc）">✕</button>
+  </div>
+  <div id="img-viewer-hint">点击空白处或按 <kbd>Esc</kbd> 关闭 · 双击图片可切换「适应屏幕 / 原图大小」</div>
+</div>
+
+<script src="js/story.js"></script>
+<script src="js/map.js"></script>
+<script src="js/quiz.js"></script>
+<script src="js/summary.js"></script>
+<script src="js/engine.js"></script>
+<!-- three.js 为 ES Module，会在上面这些脚本之后、DOMContentLoaded 之前执行 -->
+<script type="module" src="js/scene3d.js"></script>
+</body>
+</html>
