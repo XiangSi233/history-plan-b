@@ -794,3 +794,14 @@ em{font-style:normal}
   font-family:inherit;font-size:11px;border:1px solid rgba(255,255,255,.3);
   border-radius:3px;padding:0 5px;margin:0 2px;
 }
+
+/* 结局后「继续预览路线图」用的返回按钮 */
+#map-back{
+  position:absolute;left:50%;bottom:20px;transform:translateX(-50%);z-index:14;
+  padding:10px 26px;border-radius:2px;font-size:14.5px;letter-spacing:.12em;
+  background:linear-gradient(135deg,rgba(12,18,26,.94),rgba(8,12,18,.96));
+  border:1px solid rgba(216,176,98,.45);color:var(--paper);
+  box-shadow:0 10px 30px rgba(0,0,0,.55);transition:.24s var(--ease);
+}
+#map-back:hover{border-color:var(--gold);color:var(--gold-2);transform:translateX(-50%) translateY(-2px)}
+.end-actions{flex-wrap:wrap}

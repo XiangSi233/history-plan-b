@@ -20,6 +20,7 @@ window.Engine = (function () {
   let liveSession = null;      // 当前正在进行的「三维现场会话」
   let autoMode = false;        // 自动通读（按 A 切换）
   let autoTimer = null;
+  let mapPreview = false;      // 结局后「继续预览路线图」
 
   const chapters = window.STORY.chapters;
 
@@ -93,6 +94,9 @@ window.Engine = (function () {
 
     /* 课堂小结：结局页按钮、HUD 按钮、返回、重开 */
     $('btn-summary')?.addEventListener('click', () => openSummary(screenEnd));
+    $('btn-map')?.addEventListener('click', previewMap);          // 结局后继续看路线图
+    /* 注意要包一层：直接把 exitPreview 当监听器会把 click 事件当成 silent 参数 */
+    $('map-back')?.addEventListener('click', () => exitPreview());
     $('hud-summary')?.addEventListener('click', () => openSummary(screenGame));
     $('sum-back')?.addEventListener('click', closeSummary);
     $('sum-restart')?.addEventListener('click', () => {
@@ -134,6 +138,7 @@ window.Engine = (function () {
         return;
       }
       if (!$('quiz-overlay').classList.contains('hidden')) return;   // 答题面板自己处理
+      if (mapPreview && e.key === 'Escape') { e.preventDefault(); exitPreview(); return; }
       if (e.key.toLowerCase() === 'a' || e.key === 'A') {            // A：自动通读开关
         e.preventDefault(); setAuto(!autoMode); return;
       }
@@ -166,6 +171,7 @@ window.Engine = (function () {
   }
   function startGame() {
     clearFlow();
+    exitPreview(true);
     chapterIdx = 0; stepIdx = 0; score = 0;
     updateScore(0);
     switchScreen(screenTitle, screenGame);
@@ -174,6 +180,8 @@ window.Engine = (function () {
   function restart() {
     /* 从小结页或结局页重开都要能正确淡出 */
     clearFlow();
+    mapPreview = false;
+    $('map-back')?.classList.add('hidden');
     teardownSession();
     const from = screenSum.classList.contains('active') ? screenSum : screenEnd;
     sumFrom = null;
@@ -206,6 +214,42 @@ window.Engine = (function () {
       screenSum.classList.add('active');
       screenSum.scrollTop = 0;
     }, 220);
+  }
+
+  /* ── 结局后：自由预览长征路线图 ── */
+  function previewMap() {
+    clearFlow();
+    teardownSession();
+    mapPreview = true;
+    showScene('map');
+    dialogBox.classList.add('hidden');
+    dialogChoices.classList.add('hidden');
+    switchScreen(screenEnd, screenGame);
+    /* HUD 换成「自由回顾」，进度拉满 */
+    hudChapterNum.textContent = '自由回顾';
+    hudChapterName.textContent = '长征路线图';
+    hudProgressFill.style.width = '100%';
+    hudProgressText.textContent = '100%';
+    if (window.MapModule) {
+      window.MapModule.setHighlight(null);
+      window.MapModule.setUnlockedIdx(999);      // 全部地点都可看
+      window.MapModule.resetView();
+    }
+    const inst = $('map-instruction');
+    if (inst) inst.remove();
+    const tip = $('map-tooltip');
+    if (tip) tip.classList.remove('visible');
+    $('map-back').classList.remove('hidden');
+  }
+
+  function exitPreview(silent) {
+    if (!mapPreview) return;
+    mapPreview = false;
+    $('map-back')?.classList.add('hidden');
+    const tip = $('map-tooltip');
+    if (tip) tip.classList.remove('visible');
+    if (!silent) switchScreen(screenGame, screenEnd);
+    else screenGame.classList.remove('active');
   }
 
   function closeSummary() {
@@ -648,6 +692,10 @@ window.Engine = (function () {
 
   /* ── 地图点击 ── */
   function onMapClick(id, place) {
+    if (mapPreview) {                    // 自由回顾：点一下就把镜头推到那一站
+      if (window.MapModule && place) window.MapModule.focusOn(place.rx, place.ry);
+      return;
+    }
     if (!waitingMap) return;
     waitingMap = false;
     clearTimeout(mapTimer);
