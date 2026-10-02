@@ -18,6 +18,8 @@ window.Engine = (function () {
   let waitingMap = false;
   let mapTimer = null;
   let liveSession = null;      // 当前正在进行的「三维现场会话」
+  let autoMode = false;        // 自动通读（按 A 切换）
+  let autoTimer = null;
 
   const chapters = window.STORY.chapters;
 
@@ -75,7 +77,7 @@ window.Engine = (function () {
         speakerRole = $('dialog-speaker-role'), dialogText = $('dialog-text'),
         dialogCursor = $('dialog-cursor'), dialogChoices = $('dialog-choices');
   const charLeft = $('char-left'), charRight = $('char-right'), dialogBg = $('dialog-bg');
-  const btnAdvance = $('btn-advance'), btnStart = $('btn-start'), btnRestart = $('btn-restart');
+  const btnStart = $('btn-start'), btnRestart = $('btn-restart'), hudAuto = $('hud-auto');
   const hudChapterNum = $('hud-chapter-num'), hudChapterName = $('hud-chapter-name'),
         hudProgressFill = $('hud-progress-fill'), hudProgressText = $('hud-progress-text'),
         hudScoreVal = $('hud-score-val');
@@ -100,14 +102,14 @@ window.Engine = (function () {
 
     dialogBox?.addEventListener('click', (e) => {
       if (e.target.closest('.choice-btn')) return;
+      clearTimeout(autoTimer);
       if (liveSession) { liveSession.click(); return; }
-      advanceDialog();
+      if (isTyping) { finishTyping(); return; }   // 第一次点：先把字打完
+      nextStep();                                 // 已经打完：翻到下一页
     });
-    btnAdvance?.addEventListener('click', () => {
-      btnAdvance.classList.add('hidden');
-      if (liveSession) liveSession.continueBtn();
-      else nextStep();
-    });
+
+    /* 自动通读：HUD 按钮 或 键盘 A */
+    hudAuto?.addEventListener('click', () => setAuto(!autoMode));
 
     /* 三维现场：模式选择卡 + 模式切换条 */
     document.querySelectorAll('#scene-3d-pick [data-mode]').forEach(b =>
@@ -119,9 +121,10 @@ window.Engine = (function () {
       if (liveSession && liveSession.mode === 'free') liveSession.speak(id);
     });
 
-    /* 键盘：空格 / 回车推进，Esc 关闭弹层 */
+    /* 键盘：空格 / 回车 / → 翻页，A 自动通读，Esc 关弹层 */
     document.addEventListener('keydown', (e) => {
-      /* 大图优先：Esc 先关大图，再关知识卡 */
+      if (e.target && /^(INPUT|TEXTAREA|SELECT)$/.test(e.target.tagName)) return;
+      /* 大图优先：Esc 先关大图 */
       if (viewer && !viewer.classList.contains('hidden')) {
         if (['Escape', ' ', 'Enter'].includes(e.key)) { e.preventDefault(); closeViewer(); }
         return;
@@ -131,15 +134,16 @@ window.Engine = (function () {
         return;
       }
       if (!$('quiz-overlay').classList.contains('hidden')) return;   // 答题面板自己处理
-      if (![' ', 'Enter', 'ArrowRight'].includes(e.key)) return;
-      if (liveSession) {
-        if (liveSession.mode === 'auto' || liveSession.mode === 'free') { e.preventDefault(); liveSession.click(); }
-        return;
+      if (e.key.toLowerCase() === 'a' || e.key === 'A') {            // A：自动通读开关
+        e.preventDefault(); setAuto(!autoMode); return;
       }
+      if (![' ', 'Enter', 'ArrowRight'].includes(e.key)) return;
+      e.preventDefault();
+      clearTimeout(autoTimer);
+      if (liveSession) { liveSession.click(); return; }
       if (sceneDialog.classList.contains('active')) {
-        e.preventDefault();
-        if (isTyping) advanceDialog();
-        else if (!btnAdvance.classList.contains('hidden')) { btnAdvance.classList.add('hidden'); nextStep(); }
+        if (isTyping) finishTyping();
+        else nextStep();
       }
     });
 
@@ -154,7 +158,14 @@ window.Engine = (function () {
   }
 
   /* ── 开始 / 重开 ── */
+  function clearFlow() {
+    clearTimeout(mapTimer);
+    clearTimeout(autoTimer);
+    waitingMap = false;
+    pendingGeo = false;
+  }
   function startGame() {
+    clearFlow();
     chapterIdx = 0; stepIdx = 0; score = 0;
     updateScore(0);
     switchScreen(screenTitle, screenGame);
@@ -162,6 +173,7 @@ window.Engine = (function () {
   }
   function restart() {
     /* 从小结页或结局页重开都要能正确淡出 */
+    clearFlow();
     teardownSession();
     const from = screenSum.classList.contains('active') ? screenSum : screenEnd;
     sumFrom = null;
@@ -178,12 +190,14 @@ window.Engine = (function () {
     dialogChoices.innerHTML = '';
     dialogBox.classList.remove('on-3d');
     dialogBox.classList.add('hidden');
+    dialogCursor.classList.remove('is-ready');
     window.Scene3D?.setInteractive(false);
     window.Scene3D?.clearActors();
   }
 
   /* ── 课堂小结 ── */
   function openSummary(from) {
+    clearTimeout(autoTimer);
     sumFrom = from || screenEnd;
     window.SummaryModule?.reset();
     sumFrom.classList.add('fade-out');
@@ -235,6 +249,8 @@ window.Engine = (function () {
     updateHUD();
     /* 离开三维现场：收起模式条 / 名牌 / 会话（可重复调用） */
     if (step.type !== 'scene3d') teardownSession();
+    /* 一离开地图步就撤掉它的兜底计时器，免得十几秒后在别的地方冒出来推进剧情 */
+    if (step.type !== 'map') { clearTimeout(mapTimer); waitingMap = false; }
     switch (step.type) {
       case 'narrate': showNarrate(step); break;
       case 'dialog':  showDialog(step);  break;
@@ -256,7 +272,7 @@ window.Engine = (function () {
     dialogChoices.classList.add('hidden');
     dialogBox.classList.remove('hidden');
     dialogBox.classList.add('narration');
-    typeText(step.text, showAdvanceBtn);
+    typeText(step.text, readyNext);
   }
 
   /* ── 对话 ── */
@@ -270,7 +286,7 @@ window.Engine = (function () {
     dialogBox.classList.remove('hidden');
     updateCharacter(charLeft,  step.charLeft,  'left');
     updateCharacter(charRight, step.charRight, 'right');
-    typeText(step.text, showAdvanceBtn);
+    typeText(step.text, readyNext);
   }
 
   /* ── 答题 ── */
@@ -415,7 +431,7 @@ window.Engine = (function () {
       dialogChoices.classList.add('hidden');
       dialogChoices.classList.remove('is-grid');
       dialogChoices.innerHTML = '';
-      btnAdvance.classList.add('hidden');
+      dialogCursor.classList.remove('is-ready');
       const nameEl = $('scene-3d-name');
       if (nameEl) nameEl.textContent = s.label || '';
 
@@ -599,10 +615,11 @@ window.Engine = (function () {
       typeText(line.text, onDone);
     },
 
-    /* 点击对话框 / 按空格 */
+    /* 点击对话框 / 按空格：先补完打字 → 跳到下一句 → 结束后继续下一页 */
     click() {
       if (isTyping) { finishTyping(); return; }
-      if (this.playing) { clearTimeout(this.timer); this.next(); }
+      if (this.playing) { clearTimeout(this.timer); this.next(); return; }
+      if (this.ended) this.continueBtn();
     },
 
     /* 本场结束：停留最后一幕，等老师点【继续】 */
@@ -610,14 +627,14 @@ window.Engine = (function () {
       this.playing = false;
       this.ended = true;
       window.Scene3D?.setInteractive(false);
-      dialogCursor.style.display = 'none';
-      btnAdvance.classList.remove('hidden');
+      readyNext();                 // 显示「▼ 点击继续」，开了自动通读就自己往下走
     },
 
     continueBtn() {
+      clearTimeout(autoTimer);
       this.stop();
       liveSession = null;
-      btnAdvance.classList.add('hidden');
+      dialogCursor.classList.remove('is-ready');
       nextStep();
     },
 
@@ -657,7 +674,8 @@ window.Engine = (function () {
     typeDone = onDone || null;
     typeFired = false;
     dialogText.textContent = '';
-    dialogCursor.style.display = 'inline';
+    dialogCursor.style.display = 'none';       // 打字时不显示「点击继续」
+    dialogCursor.classList.remove('is-ready');
     let i = 0;
     const tick = () => {
       if (i < typeFull.length) {
@@ -688,10 +706,36 @@ window.Engine = (function () {
     return true;
   }
 
-  function advanceDialog() {
-    if (!isTyping) return;
-    finishTyping();
-    showAdvanceBtn();
+  /* 一句话打完：亮出「▼ 点击继续」，自动通读时排下一次翻页 */
+  function readyNext() {
+    dialogCursor.style.display = 'inline';
+    dialogCursor.classList.add('is-ready');
+    scheduleAuto(1100 + Math.min(2400, (typeFull || '').length * 30));
+  }
+
+  /* ── 自动通读（A 键 / HUD 按钮） ── */
+  function setAuto(on) {
+    autoMode = !!on;
+    hudAuto?.classList.toggle('is-on', autoMode);
+    clearTimeout(autoTimer);
+    if (!autoMode) return;
+    /* 三维现场里按 A：直接用「自动模式」把这一场播完 */
+    if (liveSession) {
+      if (!liveSession.ended && liveSession.mode !== 'auto') Session.start('auto');
+      else if (liveSession.ended) scheduleAuto(500);
+      return;
+    }
+    if (sceneDialog.classList.contains('active') && !isTyping) scheduleAuto(500);
+  }
+
+  function scheduleAuto(delay) {
+    clearTimeout(autoTimer);
+    if (!autoMode) return;
+    autoTimer = setTimeout(() => {
+      if (!autoMode) return;
+      if (liveSession) liveSession.click();
+      else nextStep();
+    }, delay);
   }
 
   /* ── 辅助 ── */
@@ -723,8 +767,6 @@ window.Engine = (function () {
     el.classList.remove('hidden');
     el.classList.add('char-in');
   }
-
-  function showAdvanceBtn() { btnAdvance.classList.remove('hidden'); }
 
   function showMapInstruction(text) {
     let el = $('map-instruction');

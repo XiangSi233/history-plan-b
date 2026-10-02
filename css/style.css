@@ -43,8 +43,7 @@ em{font-style:normal}
 .screen:not(.active) #dialog-box,
 .screen:not(.active) #scene-3d-pick,
 .screen:not(.active) #scene-3d-modes,
-.screen:not(.active) #actor-layer,
-.screen:not(.active) #btn-advance{
+.screen:not(.active) #actor-layer{
   visibility:hidden !important;
   pointer-events:none !important;
 }
@@ -278,18 +277,11 @@ em{font-style:normal}
 @keyframes bob{0%,100%{transform:translateY(0);opacity:.6}50%{transform:translateY(4px);opacity:1}}
 #dialog-choices{display:flex;flex-direction:column;gap:10px;margin-top:18px}
 
-/* 继续按钮 */
-#btn-advance{
-  position:absolute;right:36px;bottom:198px;z-index:25;
-  padding:10px 26px;border-radius:2px;font-size:15px;letter-spacing:.1em;
-  background:linear-gradient(135deg,rgba(184,35,47,.92),rgba(140,22,32,.96));
-  border:1px solid rgba(224,67,79,.6);color:#fff;box-shadow:0 8px 26px rgba(184,35,47,.4);
-  transition:.25s var(--ease);animation:bob 1.6s ease-in-out infinite;
-}
-#btn-advance:hover{transform:translateY(-2px)}
-.key-hint{
-  font-size:10.5px;opacity:.75;border:1px solid rgba(255,255,255,.35);
-  border-radius:3px;padding:0 5px;margin-left:6px;
+/* 「点击继续」提示：字打完才出现 */
+#dialog-cursor.is-ready::after{
+  content:"点击继续 / 空格";
+  margin-left:7px;font-size:11.5px;color:var(--muted);letter-spacing:.08em;
+  animation:none;text-shadow:none;
 }
 
 /* ===========================================================
@@ -475,7 +467,6 @@ em{font-style:normal}
   .char-right{left:74%}
   #dialog-text{font-size:16px}
   #dialog-text-area{min-height:120px;padding:20px 20px 24px}
-  #btn-advance{bottom:238px;right:18px;padding:8px 18px;font-size:14px}
   .key-hint{display:none}
   #map-tip{display:none}
   #geo-card-body{padding:16px 18px 20px;font-size:13.5px}
@@ -614,12 +605,16 @@ em{font-style:normal}
 .btn-ghost-line:hover{background:rgba(216,176,98,.16);border-color:var(--gold);transform:translateY(-2px)}
 
 /* HUD 里的小结入口 */
-#hud-summary{
+#hud-auto,#hud-summary{
   padding:5px 14px;border-radius:2px;font-size:12.5px;letter-spacing:.08em;
   border:1px solid rgba(216,176,98,.35);color:var(--paper-dim);
   background:rgba(6,9,14,.6);transition:.22s var(--ease);white-space:nowrap;
 }
-#hud-summary:hover{border-color:var(--gold);color:var(--paper);background:rgba(216,176,98,.16)}
+#hud-auto:hover,#hud-summary:hover{border-color:var(--gold);color:var(--paper);background:rgba(216,176,98,.16)}
+#hud-auto.is-on{
+  background:linear-gradient(135deg,#f0d091,#c99a3d);color:#1c1405;
+  border-color:#ffe9bd;font-weight:600;
+}
 
 @media (max-width:1180px){
   .sum{grid-template-columns:1fr}
