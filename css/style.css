@@ -605,15 +605,29 @@ em{font-style:normal}
 .btn-ghost-line:hover{background:rgba(216,176,98,.16);border-color:var(--gold);transform:translateY(-2px)}
 
 /* HUD 里的小结入口 */
-#hud-auto,#hud-summary{
+#hud-bgm,#hud-auto,#hud-summary{
   padding:5px 14px;border-radius:2px;font-size:12.5px;letter-spacing:.08em;
   border:1px solid rgba(216,176,98,.35);color:var(--paper-dim);
   background:rgba(6,9,14,.6);transition:.22s var(--ease);white-space:nowrap;
 }
-#hud-auto:hover,#hud-summary:hover{border-color:var(--gold);color:var(--paper);background:rgba(216,176,98,.16)}
+#hud-bgm:hover,#hud-auto:hover,#hud-summary:hover{border-color:var(--gold);color:var(--paper);background:rgba(216,176,98,.16)}
+#hud-bgm.is-off{opacity:.55;border-color:rgba(255,255,255,.16);color:var(--muted)}
 #hud-auto.is-on{
   background:linear-gradient(135deg,#f0d091,#c99a3d);color:#1c1405;
   border-color:#ffe9bd;font-weight:600;
+}
+
+/* HUD 现在有三个按钮，窄一点的笔记本屏要收紧，别挤出去 */
+@media (max-width:1440px){
+  #hud{gap:12px;padding:0 14px}
+  #hud-chapter{min-width:0}
+  #hud-progress-wrap{max-width:340px}
+  #hud-score{min-width:56px}
+  #hud-bgm,#hud-auto,#hud-summary{padding:5px 11px;font-size:12px;letter-spacing:.04em}
+}
+@media (max-width:1100px){
+  #hud-chapter-name{display:none}
+  #hud-progress-wrap{max-width:220px}
 }
 
 @media (max-width:1180px){

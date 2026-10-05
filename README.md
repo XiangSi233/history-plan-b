@@ -7,6 +7,8 @@
 > - `hudong/` 　自由探索版（路线图 + 三维会议现场）
 > - `hudong1/` 剧情闯关版（八章 galgame + 跨学科知识卡）
 > - **`hudong2/` 本目录**　模板框架 + 全套真实图片 + 重建的三维场景
+>
+> 本目录还带一条**循环背景音乐**（`assets/audio/bgm.ogg`，Opus 64kbps，1.13 MB），右上角「🔊 音乐」可随时开关。
 
 ---
 
@@ -175,6 +177,8 @@ hudong2/
 │  └─ scene3d.js           三维场景（ES Module，import 本地 three.js）
 ├─ vendor/three.module.js  three.js r169（本地，勿删）
 └─ assets/                 全部素材
+   ├─ audio/bgm.ogg        循环背景音乐（Opus 64kbps，约 1.13 MB）
+   ├─ map/ chara/ event/ photo/ geo/ relic/ painting/   （见下一节）
 ```
 
 ---
@@ -227,6 +231,16 @@ const CHAR_IMAGES = { mao: { img: 'assets/chara/mao.webp', name: '毛泽东' }, 
 - 没有 `cast` 的户外现场会自动变成「自由环视 + 听本场讲解」；
 - 想加人物台词：在对应 `cast[].lines` 里加一条即可，自动模式和自由探索都会播到。
 
+### 换背景音乐 → `assets/audio/bgm.ogg`
+整条音乐只放一个文件，循环播放，右上角 HUD 有「🔊 音乐」开关（默认开、音量 32%、切到别的标签页自动暂停、选择记在 localStorage）。
+想换成自己的曲子，压到差不多的体积再替换即可：
+
+```bash
+# 44.1kHz 立体声 mp3 → Opus 64kbps（约 1.1 MB / 2 分钟，听感基本无损）
+ffmpeg -i 你的音乐.mp3 -c:a libopus -b:a 64k -vbr on -application audio -ar 48000 -ac 2 assets/audio/bgm.ogg
+```
+> 需要兼容 Safari（不支持 Opus）的话，再导一份 `bgm.m4a`（`-c:a aac -b:a 72k`）并在 `index.html` 的 `<audio>` 里补一个 `<source>` 即可。
+
 ### 改三维场景 → `js/scene3d.js`
 每个场景一个 `buildXxx()` 函数，末尾设置默认机位：
 ```js
@@ -244,6 +258,7 @@ const DESCR = {
 - three.js r169（本地），WebGL + ACESFilmic 色调映射 + PCF 软阴影
 - 木纹、灰泥、砖石、雪地、水面、夜空、光晕**全部由 canvas 程序化生成**
 - 建议 Chrome / Edge 90+、Firefox 90+、Safari 15+（需 WebGL2 与 WebP）
+- 背景音乐用的是 **Opus（.ogg）**：Chrome / Edge / Firefox 都能播；**Safari 不支持时会自动隐藏音乐按钮**，其余功能不受影响（要 Safari 出声就按上一节补一份 `bgm.m4a` 备用源）
 - 大屏按 16:9 自适应，浏览器 <kbd>F11</kbd> 全屏即可投屏
 
 **翻页**：**点对话框本身就能翻页**（第一下把字打完，第二下翻下一页），底部不再有「继续」按钮；<kbd>空格</kbd> / <kbd>回车</kbd> / <kbd>→</kbd> 同效，右下角会闪「▼ 点击继续 / 空格」提示。

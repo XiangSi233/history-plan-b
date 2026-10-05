@@ -40,6 +40,7 @@
       <span class="hud-icon">⭐</span>
       <span id="hud-score-val">0</span>
     </div>
+    <button id="hud-bgm" title="背景音乐开关">🔊 音乐</button>
     <button id="hud-auto" title="自动通读（快捷键 A）">▶ 自动</button>
     <button id="hud-summary" title="随时打开课堂小结">课堂小结</button>
   </div>
@@ -272,6 +273,9 @@
   </div>
   <div id="img-viewer-hint">点击空白处或按 <kbd>Esc</kbd> 关闭 · 双击图片可切换「适应屏幕 / 原图大小」</div>
 </div>
+
+<!-- 背景音乐：Opus 64kbps（约 1.1 MB），循环播放；不支持 Opus 的浏览器会自动隐藏音乐按钮 -->
+<audio id="bgm" src="assets/audio/bgm.ogg" type="audio/ogg" loop preload="auto"></audio>
 
 <script src="js/story.js"></script>
 <script src="js/map.js"></script>

@@ -21,6 +21,8 @@ window.Engine = (function () {
   let autoMode = false;        // 自动通读（按 A 切换）
   let autoTimer = null;
   let mapPreview = false;      // 结局后「继续预览路线图」
+  let bgmOn = true;            // 背景音乐开关（记住上次选择）
+  let bgmFade = null;
 
   const chapters = window.STORY.chapters;
 
@@ -79,6 +81,7 @@ window.Engine = (function () {
         dialogCursor = $('dialog-cursor'), dialogChoices = $('dialog-choices');
   const charLeft = $('char-left'), charRight = $('char-right'), dialogBg = $('dialog-bg');
   const btnStart = $('btn-start'), btnRestart = $('btn-restart'), hudAuto = $('hud-auto');
+  const bgm = $('bgm'), hudBgm = $('hud-bgm');
   const hudChapterNum = $('hud-chapter-num'), hudChapterName = $('hud-chapter-name'),
         hudProgressFill = $('hud-progress-fill'), hudProgressText = $('hud-progress-text'),
         hudScoreVal = $('hud-score-val');
@@ -114,6 +117,9 @@ window.Engine = (function () {
 
     /* 自动通读：HUD 按钮 或 键盘 A */
     hudAuto?.addEventListener('click', () => setAuto(!autoMode));
+
+    /* 背景音乐 */
+    initBgm();
 
     /* 三维现场：模式选择卡 + 模式切换条 */
     document.querySelectorAll('#scene-3d-pick [data-mode]').forEach(b =>
@@ -172,6 +178,7 @@ window.Engine = (function () {
   function startGame() {
     clearFlow();
     exitPreview(true);
+    playBgm();
     chapterIdx = 0; stepIdx = 0; score = 0;
     updateScore(0);
     switchScreen(screenTitle, screenGame);
@@ -774,6 +781,61 @@ window.Engine = (function () {
       return;
     }
     if (sceneDialog.classList.contains('active') && !isTyping) scheduleAuto(500);
+  }
+
+  /* ── 背景音乐 ── */
+  function initBgm() {
+    if (!bgm) return;
+    bgm.volume = 0.32;
+    try { bgmOn = localStorage.getItem('cc-bgm') !== 'off'; } catch (e) { bgmOn = true; }
+    syncBgmBtn();
+    /* 浏览器不支持这个格式时不报错，直接把按钮收起来 */
+    bgm.addEventListener('error', () => { hudBgm?.classList.add('hidden'); });
+    hudBgm?.addEventListener('click', () => setBgm(!bgmOn));
+    /* 切到别的标签页就先安静下来，回来再续上 */
+    document.addEventListener('visibilitychange', () => {
+      if (document.hidden) bgm.pause();
+      else if (bgmOn && screenGame.classList.contains('active')) playBgm();
+    });
+  }
+
+  function syncBgmBtn() {
+    if (!hudBgm) return;
+    hudBgm.textContent = bgmOn ? '🔊 音乐' : '🔇 音乐';
+    hudBgm.classList.toggle('is-off', !bgmOn);
+  }
+
+  function playBgm() {
+    if (!bgm || !bgmOn) return;
+    clearInterval(bgmFade);
+    const target = 0.32;
+    if (bgm.paused) {
+      bgm.volume = 0;
+      const p = bgm.play();
+      if (p && p.catch) p.catch(() => {});          // 自动播放被拦就安静等着
+    }
+    bgmFade = setInterval(() => {
+      const v = Math.min(target, bgm.volume + target / 12);
+      bgm.volume = v;
+      if (v >= target) clearInterval(bgmFade);
+    }, 60);
+  }
+
+  function stopBgm() {
+    if (!bgm) return;
+    clearInterval(bgmFade);
+    bgmFade = setInterval(() => {
+      const v = Math.max(0, bgm.volume - 0.32 / 8);
+      bgm.volume = v;
+      if (v <= 0.001) { clearInterval(bgmFade); bgm.pause(); bgm.volume = 0.32; }
+    }, 50);
+  }
+
+  function setBgm(on) {
+    bgmOn = !!on;
+    try { localStorage.setItem('cc-bgm', bgmOn ? 'on' : 'off'); } catch (e) { /* 忽略 */ }
+    syncBgmBtn();
+    if (bgmOn) playBgm(); else stopBgm();
   }
 
   function scheduleAuto(delay) {
