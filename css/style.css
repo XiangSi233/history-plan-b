@@ -28,6 +28,30 @@ em{font-style:normal}
 ::-webkit-scrollbar-thumb{background:rgba(216,176,98,.35);border-radius:5px}
 ::selection{background:rgba(216,176,98,.35)}
 
+/* ===========================================================
+   顶部横幅（常驻条，不可关闭）
+   =========================================================== */
+:root{ --topbar-h: 32px; }
+#topbar{
+  position:fixed; left:0; right:0; top:0; height:var(--topbar-h); z-index:300;
+  display:flex; align-items:center; justify-content:center;
+  font-family:var(--serif); font-size:13.5px; letter-spacing:.3em; text-indent:.3em;
+  color:#e9f1f9; white-space:nowrap; overflow:hidden;
+  background:
+    linear-gradient(90deg,
+      rgba(17,23,31,.97) 0%, rgba(48,64,83,.97) 20%,
+      rgba(70,92,117,.97) 50%, rgba(48,64,83,.97) 80%, rgba(17,23,31,.97) 100%);
+  border-bottom:1px solid rgba(168,196,224,.5);
+  box-shadow:0 2px 9px rgba(0,0,0,.42);
+  text-shadow:0 1px 5px rgba(0,0,0,.7);
+  pointer-events:none;      /* 纯展示：永远不吃点击，也没地方关掉它 */
+  user-select:none;
+}
+#topbar::after{
+  content:""; position:absolute; left:0; right:0; bottom:0; height:1px;
+  background:linear-gradient(90deg,transparent,rgba(198,222,246,.85),transparent);
+}
+
 /* ---------- 屏幕 ---------- */
 .screen{
   position:fixed;inset:0;opacity:0;visibility:hidden;pointer-events:none;
@@ -95,9 +119,9 @@ em{font-style:normal}
 
 /* ---------- HUD ---------- */
 #hud{
-  position:absolute;top:0;left:0;right:0;height:58px;z-index:40;
+  position:absolute;top:var(--topbar-h);left:0;right:0;height:58px;z-index:40;
   display:flex;align-items:center;gap:20px;padding:0 22px;
-  background:linear-gradient(to bottom,rgba(6,9,14,.94),rgba(6,9,14,.5) 70%,transparent);
+  background:linear-gradient(to bottom,rgba(6,9,14,.96),rgba(6,9,14,.74) 72%,rgba(6,9,14,.16));
 }
 #hud-chapter{display:flex;align-items:baseline;gap:10px;min-width:220px}
 #hud-chapter-num{
@@ -126,7 +150,7 @@ em{font-style:normal}
    =========================================================== */
 #scene-map{background:#070a0e}
 #map-canvas{position:absolute;inset:0;width:100%;height:100%;display:block;cursor:grab}
-#map-controls{position:absolute;right:20px;top:76px;display:flex;flex-direction:column;gap:9px;z-index:12}
+#map-controls{position:absolute;right:20px;top:calc(var(--topbar-h) + 76px);display:flex;flex-direction:column;gap:9px;z-index:12}
 .map-btn{
   width:42px;height:42px;border-radius:3px;font-size:17px;
   background:rgba(10,15,22,.85);border:1px solid var(--line,rgba(216,176,98,.3));
@@ -150,17 +174,20 @@ em{font-style:normal}
   transition:opacity .2s var(--ease);
   background:rgba(6,9,14,.75);border:1px solid rgba(216,176,98,.2);border-radius:3px;padding:7px 13px;
 }
+/* 地图操作提示：必须排在横幅 + HUD 下面，否则会压住进度条
+   （层级也压到 HUD(40) 之下，任何时候都不跟 HUD 抢） */
 #map-instruction{
-  position:absolute;left:50%;top:9%;transform:translate(-50%,-50%);
+  position:absolute;left:50%;top:calc(var(--topbar-h) + 96px);transform:translateX(-50%);
   background:rgba(8,12,18,.92);border:1px solid rgba(216,176,98,.45);border-radius:3px;
   padding:13px 26px;font-size:15px;letter-spacing:.05em;color:var(--paper);
-  z-index:30;pointer-events:none;box-shadow:var(--shadow);text-align:center;
+  z-index:26;pointer-events:none;box-shadow:var(--shadow);text-align:center;
+  max-width:min(760px,86vw);
 }
 @keyframes fadeInOut{
-  0%{opacity:0;transform:translate(-50%,-56%)}
-  10%{opacity:1;transform:translate(-50%,-50%)}
-  72%{opacity:1;transform:translate(-50%,-50%)}
-  100%{opacity:0;transform:translate(-50%,-50%)}
+  0%{opacity:0;transform:translate(-50%,-10px)}
+  10%{opacity:1;transform:translate(-50%,0)}
+  72%{opacity:1;transform:translate(-50%,0)}
+  100%{opacity:0;transform:translate(-50%,0)}
 }
 
 /* 地图悬停卡片 */
@@ -189,7 +216,7 @@ em{font-style:normal}
    =========================================================== */
 #scene-3d{background:#04060a}
 #canvas-3d{position:absolute;inset:0;width:100%;height:100%;display:block;cursor:grab}
-#scene-3d-ui{position:absolute;left:0;right:0;top:74px;text-align:center;z-index:10;pointer-events:none}
+#scene-3d-ui{position:absolute;left:0;right:0;top:calc(var(--topbar-h) + 74px);text-align:center;z-index:10;pointer-events:none}
 #scene-3d-name{
   display:inline-block;font-family:var(--serif);font-size:19px;letter-spacing:.12em;
   color:var(--paper);background:rgba(6,9,14,.72);border:1px solid rgba(216,176,98,.35);
@@ -480,10 +507,14 @@ em{font-style:normal}
    课堂小结
    =========================================================== */
 #screen-summary{overflow:auto;background:var(--ink)}
-.sum-wrap{min-height:100%;padding:18px 26px 60px}
+.sum-wrap{
+  min-height:100%;
+  /* 顶部留出横幅的高度，小结的吸顶标题才不会被压住 */
+  padding:calc(var(--topbar-h) + 18px) 26px 60px;
+}
 
 .sum-head{
-  position:sticky;top:0;z-index:20;display:flex;align-items:center;gap:16px;
+  position:sticky;top:var(--topbar-h);z-index:20;display:flex;align-items:center;gap:16px;
   padding:12px 0 14px;margin:0 -26px 20px;padding-left:26px;padding-right:26px;
   background:linear-gradient(to bottom,rgba(6,9,14,.97),rgba(6,9,14,.82) 70%,transparent);
 }
@@ -629,6 +660,9 @@ em{font-style:normal}
   #hud-chapter-name{display:none}
   #hud-progress-wrap{max-width:220px}
 }
+@media (max-width:820px){
+  #topbar{font-size:11.5px;letter-spacing:.14em;text-indent:.14em}
+}
 
 @media (max-width:1180px){
   .sum{grid-template-columns:1fr}
@@ -662,7 +696,7 @@ em{font-style:normal}
 
 /* 模式切换条 */
 #scene-3d-modes{
-  position:absolute;right:20px;top:74px;z-index:14;
+  position:absolute;right:20px;top:calc(var(--topbar-h) + 74px);z-index:14;
   display:flex;align-items:center;gap:8px;
   background:rgba(6,9,14,.78);border:1px solid rgba(216,176,98,.28);
   border-radius:3px;padding:6px 10px;backdrop-filter:blur(3px);
@@ -789,7 +823,7 @@ em{font-style:normal}
 #img-viewer.is-actual #img-viewer-img{max-width:none;max-height:none;cursor:grab}
 #img-viewer.is-panning #img-viewer-img{cursor:grabbing;transition:none}
 #img-viewer-bar{
-  position:absolute;left:0;right:0;top:0;z-index:2;
+  position:absolute;left:0;right:0;top:var(--topbar-h);z-index:2;
   display:flex;align-items:center;gap:14px;padding:14px 20px;
   background:linear-gradient(to bottom,rgba(4,6,10,.92),transparent);
 }

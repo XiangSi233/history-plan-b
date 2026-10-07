@@ -8,6 +8,9 @@
 </head>
 <body>
 
+<!-- ===== 顶部横幅（常驻、不可关闭） ===== -->
+<div id="topbar" role="note" aria-label="授课班级">景洪市第四中学　八(5)班　李梓浩</div>
+
 <!-- ===== 开场画面 ===== -->
 <div id="screen-title" class="screen active">
   <div class="title-bg"></div>
@@ -274,8 +277,12 @@
   <div id="img-viewer-hint">点击空白处或按 <kbd>Esc</kbd> 关闭 · 双击图片可切换「适应屏幕 / 原图大小」</div>
 </div>
 
-<!-- 背景音乐：Opus 64kbps（约 1.1 MB），循环播放；不支持 Opus 的浏览器会自动隐藏音乐按钮 -->
-<audio id="bgm" src="assets/audio/bgm.ogg" type="audio/ogg" loop preload="auto"></audio>
+<!-- 背景音乐：Chrome / Edge / Firefox 走 Opus（约 1.1 MB，同体积听感最好），
+     Safari 不支持 Opus，会自动回落到 AAC（m4a）；两个都放不了才会隐藏音乐按钮 -->
+<audio id="bgm" loop preload="auto">
+  <source src="assets/audio/bgm.ogg" type="audio/ogg; codecs=opus">
+  <source src="assets/audio/bgm.m4a" type="audio/mp4; codecs=mp4a.40.2">
+</audio>
 
 <script src="js/story.js"></script>
 <script src="js/map.js"></script>

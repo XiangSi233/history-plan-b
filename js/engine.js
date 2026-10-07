@@ -789,8 +789,17 @@ window.Engine = (function () {
     bgm.volume = 0.32;
     try { bgmOn = localStorage.getItem('cc-bgm') !== 'off'; } catch (e) { bgmOn = true; }
     syncBgmBtn();
-    /* 浏览器不支持这个格式时不报错，直接把按钮收起来 */
-    bgm.addEventListener('error', () => { hudBgm?.classList.add('hidden'); });
+    /* 用了 <source> 备选源时，error 事件是发在各个 source 上的；
+       全部格式都放不了（例如很老的浏览器）才把音乐按钮收起来 */
+    const srcs = [...bgm.querySelectorAll('source')];
+    if (srcs.length) {
+      let failed = 0;
+      srcs.forEach(s => s.addEventListener('error', () => {
+        if (++failed >= srcs.length) hudBgm?.classList.add('hidden');
+      }));
+    } else {
+      bgm.addEventListener('error', () => hudBgm?.classList.add('hidden'));
+    }
     hudBgm?.addEventListener('click', () => setBgm(!bgmOn));
     /* 切到别的标签页就先安静下来，回来再续上 */
     document.addEventListener('visibilitychange', () => {
