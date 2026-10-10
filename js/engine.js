@@ -711,7 +711,7 @@ window.Engine = (function () {
     if (tip) {
       tip.innerHTML =
         `<div class="tt-head"><span class="tt-name">${place.name}</span><span class="tt-time">${place.time || ''}</span></div>
-         ${place.img ? `<img class="tt-img" src="${place.img}" alt="${place.name}" draggable="false">` : ''}
+         ${place.img ? `<img class="tt-img${place.tall ? ' tt-img--tall' : ''}" src="${place.img}" alt="${place.name}" draggable="false">` : ''}
          <div class="tt-desc">${place.desc}</div>
          <div class="tt-geo"><span class="tt-geo-tag">地理</span>${place.geo}</div>`;
       tip.classList.add('visible');

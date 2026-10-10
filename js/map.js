@@ -87,7 +87,7 @@ window.MapModule = (function () {
       rx: 418 / MAP_W, ry: 108 / MAP_H, time: '1935年10月',
       desc: '中央红军到达陕北吴起镇，与陕北红军会师，中央红军历时一年的长征胜利结束。',
       geo: '吴起镇（今吴起县）位于陕西省延安市，地处黄土高原腹地，沟壑纵横、水土流失严重。',
-      img: 'assets/photo/wuqi-town.webp' },
+      img: 'assets/photo/wuqi-town.webp', tall: true },   // tall：竖构图，卡片里按完整图显示（不裁切）
 
     { id: 'huining', name: '会宁会师', type: 'end',
       rx: 300 / MAP_W, ry: 165 / MAP_H, time: '1936年10月',
@@ -420,9 +420,10 @@ window.MapModule = (function () {
    *  一旦拿它参与定位，卡片就会「落位漂移」。 */
   function positionTooltip(place) {
     const P = screenPosOf(place.id);
-    const M = 10;                 // 边距
-    const TW = 284;               // 卡片固定宽度（与 CSS 一致）
-    const TH = 310;               // 标称高度（实际 295~340，取中间值）
+    const M = 10;                 // 左右 / 底部边距
+    const MT = 96;                // 顶部边距：让开署名横幅(32) + HUD(58)
+    const TW = 320;               // 卡片固定宽度（与 CSS 一致）
+    const TH = 350;               // 标称高度（实际 300~400，含竖图时更高）
 
     let x = P.x + 22;                                     // 默认放地点右侧
     if (x + TW > W - M) x = P.x - TW - 22;                // 右边放不下 → 翻到左侧
@@ -430,7 +431,7 @@ window.MapModule = (function () {
 
     let y = P.y - TH / 2;                                 // 垂直居中于地点
     if (y + TH > H - M) y = H - TH - M;                   // 底部放不下 → 贴底
-    y = Math.max(M, y);
+    y = Math.max(MT, y);          // 卡片不要钻到横幅/HUD 底下
 
     tooltip.style.left = Math.round(x) + 'px';
     tooltip.style.top  = Math.round(y) + 'px';
@@ -450,7 +451,7 @@ window.MapModule = (function () {
            <span class="tt-name">${place.name}</span>
            <span class="tt-time">${place.time || ''}</span>
          </div>
-         ${place.img ? `<img class="tt-img" src="${place.img}" alt="${place.name}" draggable="false">` : ''}
+         ${place.img ? `<img class="tt-img${place.tall ? ' tt-img--tall' : ''}" src="${place.img}" alt="${place.name}" draggable="false">` : ''}
          <div class="tt-desc">${place.desc}</div>
          <div class="tt-geo"><span class="tt-geo-tag">地理</span>${place.geo}</div>`;
 
