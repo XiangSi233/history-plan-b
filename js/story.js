@@ -611,7 +611,7 @@ window.STORY = {
           text: '1936年10月，红一、红二、红四方面军三大主力在甘肃会宁、将台堡胜利会师。中国工农红军长征宣告胜利结束，中国革命转危为安。' },
 
         { type: 'geo', title: '陕北黄土高原 — 新的革命根据地', icon: '🏜',
-          images: ['assets/photo/mao-zhou.webp'],
+          images: ['assets/photo/loess.webp'],
           content: `
             <h4>地形特征</h4>
             <p>黄土高原位于中国中部，是世界上<strong>最大的黄土沉积区</strong>。地表支离破碎、千沟万壑，以<strong>塬、梁、峁</strong>等地貌为主。</p>

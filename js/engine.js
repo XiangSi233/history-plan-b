@@ -283,6 +283,7 @@ window.Engine = (function () {
 
   /* ── 步骤推进 ── */
   function nextStep() {
+    if (chapterIdx >= chapters.length) return;   // 结局页之后误触也不会报错
     const chapter = chapters[chapterIdx];
     stepIdx++;
     if (stepIdx >= chapter.steps.length) {

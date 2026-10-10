@@ -87,7 +87,7 @@ window.MapModule = (function () {
       rx: 418 / MAP_W, ry: 108 / MAP_H, time: '1935年10月',
       desc: '中央红军到达陕北吴起镇，与陕北红军会师，中央红军历时一年的长征胜利结束。',
       geo: '吴起镇（今吴起县）位于陕西省延安市，地处黄土高原腹地，沟壑纵横、水土流失严重。',
-      img: 'assets/photo/mao-zhou.webp' },
+      img: 'assets/photo/wuqi-town.webp' },
 
     { id: 'huining', name: '会宁会师', type: 'end',
       rx: 300 / MAP_W, ry: 165 / MAP_H, time: '1936年10月',
